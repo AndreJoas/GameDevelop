@@ -54,8 +54,8 @@ var jogoEmAndamento = true;
 // Definindo variáveis globais para estatísticas e posição do agente
 var numPits, numBreezes, numStenches, numGold, numMonsters, numArrows;
 var agentRow, agentCol, agentPoints;
-var numGoldPieces = 1; // NUMERO DE OUROS
-var numMonsterPieces = 1; // NUMERO DE MONSTRO
+var numGoldPieces = 7; // NUMERO DE OUROS
+var numMonsterPieces = 7; // NUMERO DE MONSTRO
 let tamanhoTabuleiro = 0
 let passosDados = 0;
 let flechasGastas = 0;
