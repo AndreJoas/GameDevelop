@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabuleiro com Variáveis Específicas</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <!-- Incluindo jsPDF-AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.16/jspdf.plugin.autotable.min.js"></script>
+
+</head>
+
+<body>
+    <div class="retangulo1">
+        <div class="voltaraomenu">
+            <a href="index.html" class="linkvoltar"><button class="buttonvoltar">Voltar ao menu</button></a>
+            <h2>Agente iniciante V1</h2>
+        </div>
+        <audio id="musica" src="music/"></audio>
+
+        <div class="retangulo2">
+            <div class="retangulo3">
+                <div class="retangul3">
+                    <div class="subret">
+                        <label for="size">Tamanho do Tabuleiro:</label>
+                        <input type="number" id="size" value="5">
+                        <!-- tamanho maximo=27 -->
+                    </div>
+                    <div id="passoAPasso"></div>
+                </div>
+                <div class="retangul4">
+                    <button id="detalhesButton" onclick="mostrarDetalhes()">Mostrar Detalhes</button>
+                    <div id="detalhes"></div>
+                </div>
+            </div>
+            <div class="deta">
+                <button class="ger" onclick="gerarTabuleiro()">Gerar Tabuleiro</button>
+
+                <div id="pontos">Pontos do Agente: <span id="pontosAgente">0</span></div>
+                <!-- Adicionando a exibição dos pontos do agente -->
+                <select id="selectAgent" onchange="changeAgent()">
+                    <option value="">Escolher agente</option>
+                    <option value="V2">Agente Iniciante</option>
+                </select>
+            </div>
+        </div>
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <p>FIM DE JOGO</p>
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+                <button id="baixarRelatorioBtn" class="modal-btn" onclick="baixarRelatorio()">Baixar Relatório</button>
+            </div>
+        </div>
+
+        <div id="myModal2" class="modal">
+            <div class="modal-content">
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="zoom-container" id="tabuleiro">
+        <div class="row">
+            <div class="cell" data-content=" "></div>
+            <div class="cell" data-content=" "></div>
+            <!-- Mais células aqui -->
+        </div>
+    </div>
+    <div class="overlay"></div>
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>
+
+</html>
+
+</html>
+
+</html>

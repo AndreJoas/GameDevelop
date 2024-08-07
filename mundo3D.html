@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cubo 3D com Blocos</title>
+    <link rel="stylesheet" href="styles3Dmundo.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .scene {
+            margin-top: 12rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 500px;
+            height: 500px;
+            perspective: 1000px;
+        }
+        
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+        
+        .block {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            transform-style: preserve-3d;
+        }
+        
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+        }
+        
+        .front {
+            transform: translateZ(25px);
+        }
+        
+        .back {
+            transform: rotateY(180deg) translateZ(25px);
+        }
+        
+        .left {
+            transform: rotateY(-90deg) translateZ(25px);
+        }
+        
+        .right {
+            transform: rotateY(90deg) translateZ(25px);
+        }
+        
+        .top {
+            transform: rotateX(90deg) translateZ(25px);
+        }
+        
+        .bottom {
+            transform: rotateX(-90deg) translateZ(25px);
+        }
+        
+        #controls {
+            margin: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 30px;
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        
+        .modal-btn {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .modal-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .retangulo1,
+        .retangulo2,
+        .retangulo3,
+        .retangul3,
+        .retangul4,
+        .deta {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="retangulo1">
+        <div class="voltaraomenu">
+            <a href="index.html" class="linkvoltar"><button class="buttonvoltar">Voltar ao menu</button></a>
+            <h2>Mundo de Wumpus em 3D</h2>
+        </div>
+        <audio id="musica" src="music/"></audio>
+
+        <div class="retangulo2">
+            <div class="retangulo3">
+                <div class="retangul3">
+                    <div class="subret">
+                        <label for="size">Tamanho do Tabuleiro:</label>
+                        <input type="number" id="size" value="4">
+                        <!-- tamanho maximo=27 -->
+                    </div>
+                    <div id="passoAPasso"></div>
+                </div>
+                <div class="retangul4">
+                    <button id="detalhesButton" onclick="mostrarDetalhes()">Mostrar Detalhes</button>
+                    <div id="detalhes"></div>
+                </div>
+            </div>
+            <div class="deta">
+                <button class="ger" onclick="gerarTabuleiro3D()">Gerar Tabuleiro</button>
+                <div id="pontos">Pontos do Agente: <span id="pontosAgente">1400</span></div>
+                <!-- Adicionando a exibição dos pontos do agente -->
+                <select id="selectAgent" onchange="changeAgent()">
+                    <option value="">Escolher agente</option>
+                    <option value="V3">Agente Intermediário</option>
+                </select>
+            </div>
+        </div>
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <p>FIM DE JOGO</p>
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+                <button id="baixarRelatorioBtn" class="modal-btn" onclick="baixarRelatorio()">Baixar Relatório</button>
+            </div>
+        </div>
+
+        <div id="myModal2" class="modal">
+            <div class="modal-content">
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="scene">
+        <div class="cube" id="tabuleiro">
+            <!-- Blocos serão adicionados aqui -->
+        </div>
+    </div>
+
+    <div class="overlay"></div>
+
+    <script>
+        let cube = document.getElementById('tabuleiro');
+        let rotationX = 0;
+        let rotationY = 0;
+        let zoom = 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Função para mover o agente para uma posição específica
+        function moverAgente(row, col, depth) {
+            // Atualiza a posição do agente globalmente
+            agentRow = row;
+            agentCol = col;
+            agentDepth = depth;
+
+            // Atualiza a visualização do agente no cubo
+            const size = parseInt(document.getElementById('size').value);
+            const cube = document.getElementById('tabuleiro');
+
+            // Remove o agente de sua posição anterior
+            const previousBlock = cube.querySelector(`.block.${agentSymbol}`);
+            if (previousBlock) {
+                previousBlock.textContent = '';
+            }
+
+            // Adiciona o agente à nova posição
+            const agentIndex = agentRow * size * size + agentCol * size + agentDepth;
+            const agentBlock = cube.querySelector(`.block:nth-child(${agentIndex + 1})`);
+            const agentFace = agentBlock.querySelector('.face.front');
+            agentFace.textContent = agentSymbol + flecha + emptySymbol;
+
+            // Registra a casa visitada se ainda não tiver sido visitada
+            const casaVisitada = casasVisitadas.find(casa => casa.linha === agentRow && casa.coluna === agentCol && casa.profundidade === agentDepth);
+            if (!casaVisitada) {
+                casasVisitadas.push({
+                    linha: agentRow,
+                    coluna: agentCol,
+                    profundidade: agentDepth
+                });
+            }
+
+            // Atualiza a interface do usuário com estatísticas e informações
+            document.getElementById('pontosAgente').textContent = agentPoints;
+        }
+
+        // Inicializa o jogo ao carregar a página
+        // document.addEventListener('DOMContentLoaded', function() {
+        // gerarTabuleiro();
+        // });
+
+
+
+        // Função para rotacionar o cubo
+        function rotateCube(event) {
+            if (event.key === 'ArrowUp') {
+                rotationX -= 10;
+            } else if (event.key === 'ArrowDown') {
+                rotationX += 10;
+            } else if (event.key === 'ArrowLeft') {
+                rotationY -= 10;
+            } else if (event.key === 'ArrowRight') {
+                rotationY += 10;
+            }
+            updateCubeTransform();
+        }
+
+        // Função para aplicar zoom
+        function zoomCube(event) {
+            if (event.deltaY < 0) {
+                zoom += 0.1;
+            } else if (event.deltaY > 0) {
+                zoom -= 0.1;
+            }
+            zoom = Math.max(0.1, zoom); // Limitar o zoom para não ficar negativo ou muito pequeno
+            updateCubeTransform();
+        }
+
+        // Função para atualizar a transformação do cubo
+        function updateCubeTransform() {
+            cube.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg) scale(${zoom})`;
+        }
+
+        // Adiciona os listeners de eventos
+        document.addEventListener('keydown', rotateCube);
+        document.addEventListener('wheel', zoomCube);
+
+        // Chama a função para gerar o tabuleiro
+        // gerarTabuleiro();
+    </script>
+    <script src="script3D.js"></script>
+</body>
+
+</html>

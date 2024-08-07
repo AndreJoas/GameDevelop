@@ -1,0 +1,106 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+p,
+h1 {
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
+    font-weight: 900;
+    padding: 2px;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.diagonal-images {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    /* Centraliza horizontalmente */
+    align-items: center;
+    /* Centraliza verticalmente */
+    transition: opacity 1s ease-in-out;
+}
+
+.image {
+    width: 50%;
+    /* Ajusta a largura das imagens para garantir que elas fiquem centralizadas */
+    height: 100%;
+    position: absolute;
+    transition: opacity 1s ease-in-out;
+}
+
+.image.left {
+    background: url('images/wumpus2.gif') no-repeat center center/cover;
+    clip-path: polygon(0, 100% 100%, 0 100%);
+    opacity: 0;
+    left: 0;
+    /* Certifica-se de que a imagem da esquerda comece na borda esquerda */
+}
+
+.image.right {
+    background: url('images/arqueiro.webp') no-repeat center center/cover;
+    clip-path: polygon(0, 100% 100%, 0 100%);
+    opacity: 0;
+    right: 0;
+    /* Certifica-se de que a imagem da direita comece na borda direita */
+}
+
+.show-left .left {
+    opacity: 1;
+}
+
+.show-right .right {
+    opacity: 1;
+}
+
+.show-both .left,
+.show-both .right {
+    opacity: 1;
+}
+
+.content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+.quadadohome {
+    text-align: center;
+    background: rgba(240, 239, 239, 0.382);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.buttonhome {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.persona {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}

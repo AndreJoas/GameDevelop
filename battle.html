@@ -1,0 +1,949 @@
+<!-- HTML -->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabuleiro com Variáveis Específicas</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <!-- Incluindo jsPDF-AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.16/jspdf.plugin.autotable.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="retangulo1">
+        <div class="voltaraomenu">
+            <a href="index.html" class="linkvoltar"><button class="buttonvoltar">Voltar ao menu</button></a>
+            <h2>"Battle Royale" no Mundo de Wumpus</h2>
+        </div>
+        <audio id="musica" src="music/"></audio>
+
+        <div class="retangulo2">
+            <div class="retangulo3">
+                <div class="retangul3">
+                    <div class="subret">
+                        <label for="size">Tamanho do Tabuleiro:</label>
+                        <input type="number" id="size" value="30">
+                        <!-- tamanho maximo=27 -->
+                    </div>
+                    <div id="passoAPasso"></div>
+                </div>
+                <div class="retangul4">
+                    <button id="detalhesButton" onclick="mostrarDetalhes()">Mostrar Detalhes</button>
+                    <div id="detalhes"></div>
+                </div>
+            </div>
+            <div class="deta">
+                <button class="ger" onclick="gerarTabuleiro()">Gerar Tabuleiro</button>
+
+                <!-- Container to display agent scores -->
+                <div id="agentScores" style="color: white;"></div>
+                <!-- Input to specify number of agents -->
+                <label for="numeroAgentes">Número de Agentes:</label>
+                <input type="number" id="numeroAgentes" value="1" onchange="changeNumberOfAgents()">
+            </div>
+        </div>
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <p>FIM DE JOGO</p>
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+                <button id="baixarRelatorioBtn" class="modal-btn" onclick="baixarRelatorio()">Baixar Relatório</button>
+            </div>
+        </div>
+
+        <div id="myModal2" class="modal">
+            <div class="modal-content">
+                <button id="outroAgenteBtn" class="modal-btn">Escolher outro agente</button>
+                <button id="jogarNovamenteBtn" class="modal-btn">Jogar novamente</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="zoom-container" id="tabuleiro">
+        <div class="row">
+            <div class="cell" data-content=" "></div>
+            <div class="cell" data-content=" "></div>
+            <!-- More cells here -->
+        </div>
+    </div>
+    <div class="retangul4">
+        <div id="detalhes2"></div>
+    </div>
+
+    <div class="overlay"></div>
+
+
+    <script>
+        var selectedAgent = null;
+        var numAgentes = 1; // Default number of agents
+
+        var modal = document.getElementById("myModal");
+        var modal2 = document.getElementById("myModal2");
+        // Obtém os botões do modal
+        var outroAgenteBtn = document.getElementById("outroAgenteBtn");
+        var jogarNovamenteBtn = document.getElementById("jogarNovamenteBtn");
+        // Adiciona event listeners aos botões
+        outroAgenteBtn.addEventListener("click", function() {
+            console.log("entrou")
+            changeAgent(); // Escolher outro agente
+            modal.style.display = "none"; // Esconder o modal
+            location.reload(); // Recarregar a página
+        });
+        jogarNovamenteBtn.addEventListener("click", function() {
+            gerarTabuleiro(); // Jogar novamente
+            jogoEmAndamento = true;
+            modal.style.display = "none"; // Esconder o modal
+            location.reload(); // Recarregar a página
+        });
+
+        let memoriaAgente = [];
+        let casasVisitadas = [];
+        var numPits, numBreezes, numStenches, numGold, numMonsters, numArrows;
+        var agentRow, agentCol, agentPoints;
+        var numGoldPieces = 55;
+        var numMonsterPieces = 20;
+        let tamanhoTabuleiro = 0;
+        let passosDados = 0;
+        let flechasGastas = 0;
+        let matouMonstro = 0;
+        let caiuEmPoco = 0;
+        let ourosPegos = 0;
+        let MortoPorMonstro = 0
+        let QuantMonstroKill = 0
+        let resposta1 = ''
+            // -----------
+        let resposta2 = ''
+        let resposta3 = ''
+            // Definindo os símbolos para representar as variáveis
+        var agentSymbol = 'A';
+        var monsterSymbol = 'M';
+        var pitSymbol = 'P';
+        var breezeSymbol = 'B';
+        var stenchSymbol = 'S';
+        var flecha = 'F';
+        var goldSymbol = 'G';
+        var emptySymbol = 'V'; // Símbolo para células vazias
+        var retornandoParaCasa = false;
+        var jogoEmAndamento = true;
+        var agentScoresContainer = document.getElementById('agentScores');
+        agentScoresContainer.innerHTML = '';
+
+        function changeAgent() {
+            selectedAgent = document.getElementById("selectAgent").value;
+        }
+        // ========================================
+
+        // document.addEventListener('DOMContentLoaded', function() {
+        // const tabuleiro = document.getElementById('tabuleiro');
+        // let zoom = 1;
+
+        // function zoomTabuleiro(event) {
+        // if (event.deltaY < 0) {
+        // zoom += 0.1;
+        // } else if (event.deltaY > 0) {
+        // zoom -= 0.1;
+        // }
+        // zoom = Math.max(0.1, Math.min(zoom, 3)); // Limitar o zoom para não ficar negativo ou muito pequeno
+        // tabuleiro.style.transform = `scale(${zoom})`;
+        // }
+
+        // document.addEventListener('wheel', zoomTabuleiro);
+        // });
+
+        var agentPositions = []; // Inicialização vazia, você pode ajustar conforme necessário
+        // =======================================
+        function gerarTabuleiro() {
+
+
+
+
+            var musicas = [
+                'music/Cauldron Boss music [Minecraft Dungeons OST].mp4',
+                'music/Full Metal Alchemist Opening 1_ MELISSA GUITAR COVER.mp4',
+                'music/Minecraft Dungeons OST- 15 Caravan.mp4',
+                'music/Steppe - Minecraft Dungeons_ Flames of the Nether.mp4',
+                'music/Undertale OST_ 090 - His Theme.mp4',
+                'music/Untold - Minecraft Dungeons- Flames of the Nether.mp4'
+            ];
+            var indiceMusica = Math.floor(Math.random() * musicas.length);
+            var urlMusica = musicas[indiceMusica];
+            var audio = document.getElementById('musica');
+            // Pausa a música, se estiver tocando
+            if (!audio.paused) {
+                audio.pause();
+            }
+            audio.src = urlMusica;
+            audio.currentTime = 0; // Isso reinicia a música para o início
+            audio.play();
+            var size = parseInt(document.getElementById('size').value);
+            var tabuleiro = document.getElementById('tabuleiro');
+
+
+
+
+            var detalhesButton = document.getElementById('detalhesButton');
+            var detalhesDiv = document.getElementById('detalhes');
+            var passoAPassoDiv = document.getElementById('passoAPasso');
+            tabuleiro.innerHTML = '';
+            detalhesDiv.innerHTML = '';
+            passoAPassoDiv.innerHTML = '';
+            // Inicializando as variáveis
+
+
+            numPits = 0;
+            numBreezes = 0;
+            numStenches = 0;
+            numGold = 0;
+            numMonsters = 0;
+            numArrows = 200;
+
+            gerarAgentes(numAgentes)
+
+            // Limpar o array de casas visitadas
+            memoriaAgente = [];
+            // Criando o tabuleiro com células e atribuindo pesos conforme solicitado
+            for (var i = 0; i < size; i++) {
+                var row = document.createElement('div');
+                row.classList.add('row');
+                for (var j = 0; j < size; j++) {
+                    var cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.content = '';
+                    // Atribuindo os pesos conforme solicitado
+                    var randomWeight = Math.random();
+                    if (randomWeight < 0.3) {
+                        cell.dataset.weight = 0.3; // Casa com brisa (B)
+                    } else if (randomWeight < 0.6) {
+                        cell.dataset.weight = 0.3; // Casa com fedor (S)
+                    } else {
+                        cell.dataset.weight = 0.1; // Casa vazia (V)
+                    }
+                    row.appendChild(cell);
+                    memoriaAgente = [];
+                    for (let i = 0; i < size; i++) {
+                        memoriaAgente[i] = [];
+                        for (let j = 0; j < size; j++) {
+                            // Inicializa cada célula na memória do agente com percepção vazia, peso inicial e não visitada
+                            memoriaAgente[i][j] = {
+                                percepcao: '',
+                                peso: 0.1, // Peso padrão para células não visitadas ou sem percepção específica
+                                visitado: false
+                            };
+                        }
+                    }
+                }
+                tabuleiro.appendChild(row);
+            }
+            // Colocando o agente na posição (1, 1)
+            agentRow = 0;
+            agentCol = 0;
+            var agentCell = tabuleiro.querySelector(`.row:nth-child(${agentRow + 1}) .cell:nth-child(${agentCol + 1})`);
+            agentCell.dataset.content = agentSymbol + emptySymbol;
+            agentCell.textContent = agentSymbol + flecha + emptySymbol;
+            // Adiciona a posição inicial do agente ao array de casas visitadas
+            casasVisitadas.push({
+                linha: agentRow,
+                coluna: agentCol
+            });
+            // Colocando o monstro em uma posição aleatória, diferente da posição do agente
+            // Colocando múltiplos pedaços de ouro em posições aleatórias
+            // Defina quantos pedaços de ouro você quer
+            for (var g = 0; g < numGoldPieces; g++) {
+                var goldRow, goldCol;
+                do {
+                    goldRow = Math.floor(Math.random() * size);
+                    goldCol = Math.floor(Math.random() * size);
+                } while ((goldRow === agentRow && goldCol === agentCol) ||
+                    (goldRow === monsterRow && goldCol === monsterCol) ||
+                    tabuleiro.querySelector(`.row:nth-child(${goldRow + 1}) .cell:nth-child(${goldCol + 1})`).dataset.content.includes(goldSymbol));
+                var goldCell = tabuleiro.querySelector(`.row:nth-child(${goldRow + 1}) .cell:nth-child(${goldCol + 1})`);
+                goldCell.dataset.content = goldSymbol;
+                goldCell.textContent = goldSymbol;
+                numGold++;
+            }
+            // Calculando o número de poços
+            var maxPits = size - 1;
+            // Gerando os poços e as brisas
+            for (var k = 0; k < maxPits; k++) {
+                var pitRow, pitCol;
+                do {
+                    pitRow = Math.floor(Math.random() * size);
+                    pitCol = Math.floor(Math.random() * size);
+                } while ((pitRow === agentRow && pitCol === agentCol) || (pitRow === monsterRow && pitCol === monsterCol) || (pitRow === goldRow && pitCol === goldCol));
+                var pitCell = tabuleiro.querySelector(`.row:nth-child(${pitRow + 1}) .cell:nth-child(${pitCol + 1})`);
+                pitCell.dataset.content = pitSymbol;
+                pitCell.textContent = pitSymbol;
+                numPits++;
+                // Colocando brisas ao redor do poço
+                if (pitRow > 0) {
+                    var topCell = tabuleiro.querySelector(`.row:nth-child(${pitRow}) .cell:nth-child(${pitCol + 1})`);
+                    if (!topCell.dataset.content.includes(pitSymbol)) {
+                        topCell.dataset.content += breezeSymbol;
+                        topCell.textContent = topCell.dataset.content;
+                        numBreezes++;
+                    }
+                }
+                if (pitRow < size - 1) {
+                    var bottomCell = tabuleiro.querySelector(`.row:nth-child(${pitRow + 2}) .cell:nth-child(${pitCol + 1})`);
+                    if (!bottomCell.dataset.content.includes(pitSymbol)) {
+                        bottomCell.dataset.content += breezeSymbol;
+                        bottomCell.textContent = bottomCell.dataset.content;
+                        numBreezes++;
+                    }
+                }
+                if (pitCol > 0) {
+                    var leftCell = tabuleiro.querySelector(`.row:nth-child(${pitRow + 1}) .cell:nth-child(${pitCol})`);
+                    if (!leftCell.dataset.content.includes(pitSymbol)) {
+                        leftCell.dataset.content += breezeSymbol;
+                        leftCell.textContent = leftCell.dataset.content;
+                        numBreezes++;
+                    }
+                }
+                if (pitCol < size - 1) {
+                    var rightCell = tabuleiro.querySelector(`.row:nth-child(${pitRow + 1}) .cell:nth-child(${pitCol + 2})`);
+                    if (!rightCell.dataset.content.includes(pitSymbol)) {
+                        rightCell.dataset.content += breezeSymbol;
+                        rightCell.textContent = rightCell.dataset.content;
+                        numBreezes++;
+                    }
+                }
+            }
+            for (var m = 0; m < numMonsterPieces; m++) {
+                var monsterRow, monsterCol;
+                do {
+                    monsterRow = Math.floor(Math.random() * size);
+                    monsterCol = Math.floor(Math.random() * size);
+                } while ((monsterRow === agentRow && monsterCol === agentCol));
+                var monsterCell = tabuleiro.querySelector(`.row:nth-child(${monsterRow + 1}) .cell:nth-child(${monsterCol + 1})`);
+                monsterCell.dataset.content = monsterSymbol;
+                monsterCell.textContent = monsterSymbol;
+                numMonsters++;
+                // Adicionando fedor ao redor do monstro
+                if (monsterRow > 0) {
+                    var monsterTopCell = tabuleiro.querySelector(`.row:nth-child(${monsterRow}) .cell:nth-child(${monsterCol + 1})`);
+                    if (!monsterTopCell.dataset.content.includes(monsterSymbol)) {
+                        monsterTopCell.dataset.content += stenchSymbol;
+                        monsterTopCell.textContent = monsterTopCell.dataset.content;
+                        numStenches++;
+                    }
+                }
+                if (monsterRow < size - 1) {
+                    var monsterBottomCell = tabuleiro.querySelector(`.row:nth-child(${monsterRow + 2}) .cell:nth-child(${monsterCol + 1})`);
+                    if (!monsterBottomCell.dataset.content.includes(monsterSymbol)) {
+                        monsterBottomCell.dataset.content += stenchSymbol;
+                        monsterBottomCell.textContent = monsterBottomCell.dataset.content;
+                        numStenches++;
+                    }
+                }
+                if (monsterCol > 0) {
+                    var monsterLeftCell = tabuleiro.querySelector(`.row:nth-child(${monsterRow + 1}) .cell:nth-child(${monsterCol})`);
+                    if (!monsterLeftCell.dataset.content.includes(monsterSymbol)) {
+                        monsterLeftCell.dataset.content += stenchSymbol;
+                        monsterLeftCell.textContent = monsterLeftCell.dataset.content;
+                        numStenches++;
+                    }
+                }
+                if (monsterCol < size - 1) {
+                    var monsterRightCell = tabuleiro.querySelector(`.row:nth-child(${monsterRow + 1}) .cell:nth-child(${monsterCol + 2})`);
+                    if (!monsterRightCell.dataset.content.includes(monsterSymbol)) {
+                        monsterRightCell.dataset.content += stenchSymbol;
+                        monsterRightCell.textContent = monsterRightCell.dataset.content;
+                        numStenches++;
+                    }
+                }
+            }
+            // Preenchendo as células vazias com o símbolo de célula vazia
+            var emptyCells = tabuleiro.querySelectorAll('.cell');
+
+            emptyCells.forEach(cell => {
+                if (cell.textContent === '') {
+                    cell.dataset.content = emptySymbol;
+                    cell.textContent = emptySymbol;
+                }
+            });
+            // Mostrar botão de detalhes
+            detalhesButton.style.display = 'block';
+            var mensagem = '';
+            switch (agentCell.dataset.content) {
+                case 'AV':
+                    mensagem = '- Você se sente sozinho, esta casa está vazia.';
+                    break;
+                case 'AVS':
+                    mensagem = '- Você iniciou a jornada sentindo um cheiro estranho, cuidado o monstro pode estar por perto.';
+                    break;
+                case 'AVB':
+                case 'AVBB':
+                case 'AVBBB':
+                    mensagem = '- Você iniciou sua jornada sentindo uma brisa, pode haver poços por perto.';
+                    break;
+                case 'AVBS':
+                case 'AVSB':
+                    mensagem = '- Você iniciou a jornada sentindo um cheiro estranho e uma brisa. Fique alerta, pode haver monstro e poços por perto.';
+                    break;
+                default:
+                    mensagem = '- Você entrou em uma casa vazia.';
+                    break;
+            }
+            // Adiciona a mensagem à lista de detalhes
+            var passoAPasso = document.getElementById('passoAPasso');
+            var listItem = document.createElement('li');
+            listItem.textContent = mensagem;
+            passoAPasso.appendChild(listItem);
+            // inicializarCasasVisitadas(size);
+            tamanhoTabuleiro = size;
+            // moveAgent();
+            // Exemplo de uso:
+        }
+
+
+        function handleKeyDown(event) {
+            if (event.key === 'f' || event.key === 'F') {
+                if (!flechaAtirada) {
+                    flechaAtirada = true;
+                }
+            } else {
+                // Outras teclas para movimentação do agente
+                moverAgente(event.key);
+            }
+        }
+
+        function fimDeJogo() {
+            var agentsAlive = false;
+
+            // Verificar se há agentes vivos
+            for (var i = 0; i < agentes.length; i++) {
+                var agente = agentes[i];
+
+                if (agente === undefined) {
+                    console.error(`Agente na posição ${i} está indefinido.`);
+                    continue;
+                }
+
+                // Verificar se o agente está em uma posição válida (não morto)
+                if (!agente.morto) {
+                    agentsAlive = true;
+                    break; // Se encontrou um agente vivo, pode parar a verificação
+                }
+            }
+
+            // Se nenhum agente estiver vivo, exibir o modal
+            if (!agentsAlive) {
+                if (selectedAgent === 'V3') {
+                    memoriaAgente = [];
+                }
+                jogoEmAndamento = false; // Define o jogo como não em andamento
+                modal.style.display = "block"; // Mostra o modal
+            }
+        }
+
+
+
+        // Variáveis globais para guardar informações dos agentes
+        var agentes = []; // Array para armazenar os agentes gerado
+
+
+        // Função para mostrar detalhes de todos os agentes
+        function mostrarDetalhes() {
+            // Verificar se todos os agentes terminaram seus movimentos
+            var todosAgentesTerminaram = true;
+            for (var i = 0; i < agentes.length; i++) {
+                // Verificar se o agente tem posição definida (representado aqui como linha e coluna)
+                if (agentes[i].linha === undefined || agentes[i].coluna === undefined) {
+                    todosAgentesTerminaram = false;
+                    break;
+                }
+            }
+
+            // Mostrar detalhes se todos os agentes terminaram seus movimentos
+            if (todosAgentesTerminaram) {
+                var detalhesDiv = document.getElementById('detalhes');
+                var detalhesDiv2 = document.getElementById('detalhes2');
+                detalhesDiv.innerHTML = `
+            <div class="det po"><p>Número de Poços: ${numPits}</p></div>
+            <div class="det br"><p>Número de Brisas: ${numBreezes}</p></div>
+            <div class="det fr"><p>Número de Fedor: ${numStenches}</p></div>
+            <div class="det go"><p>Número de Ouro: ${numGold}</p></div>
+            <div class="det mo"><p>Número de Monstros: ${numMonsters}</p></div>
+            <div class="det fl"><p>Número de Flechas: ${numArrows}</p></div>
+        `;
+
+                // Limpar o conteúdo anterior das divs de detalhes
+                detalhesDiv2.innerHTML = '';
+                agentScoresContainer.innerHTML = ''; // Limpar conteúdo anterior
+
+                // Mostrar detalhes individuais de cada agente no console e na div de detalhes
+                for (var j = 0; j < agentes.length; j++) {
+                    console.log(`Detalhes do Agente ${j + 1}:`);
+                    console.log(`- Pontos: ${agentes[j].pontos}, Passos dados: ${agentes[j].passos}, Flechas gastas: ${agentes[j].flechas}, Matou monstro: ${agentes[j].matouMonstro}, Caiu em poço: ${agentes[j].caiuEmPoco}, Ouros pegos: ${agentes[j].ourosPegos}`);
+
+                    agentScoresContainer.innerHTML += `
+                <div class="telaAgente">
+                    <p>Detalhes do Agente ${j + 1}:</p>
+                    <p>Pontos: ${agentes[j].pontos}</p>
+                </div>
+            `;
+
+                    // Adicionar detalhes na div de detalhes
+                    detalhesDiv2.innerHTML += `
+                <div class="det-agente">
+                    <p>Detalhes do Agente ${j + 1}:</p>
+                    <p>Passos dados: ${agentes[j].passos}, Flechas gastas: ${agentes[j].flechas}, Matou monstro: ${agentes[j].matouMonstro}, Caiu em poço: ${agentes[j].caiuEmPoco}, Ouros pegos: ${agentes[j].ourosPegos}</p>
+                </div>
+            `;
+                }
+
+                detalhesDiv.style.display = 'block';
+            }
+        }
+
+        // Função para gerar os agentes com base no número especificado
+        function gerarAgentes(numeroAgentes) {
+            agentes = []; // Limpar o array de agentes antes de gerar novos
+            for (let i = 0; i < numeroAgentes; i++) {
+                // Gerar um novo agente com posição inicial, pontuação, etc.
+                var novoAgente = {
+                    id: i,
+                    linha: 0, // Defina a posição inicial conforme necessário
+                    coluna: 0,
+                    pontos: 1400, // Pontuação inicial
+                    passos: 0, // Número inicial de passos dados
+                    flechas: 0, // Número inicial de flechas gastas
+                    matouMonstro: 0, // Inicializa como não matou monstro
+                    MortoPorMonstro: 0,
+                    morto: false, // Inicialize o status de morto do agente
+                    caiuEmPoco: 0, // Inicializa como não caiu em poço
+                    ourosPegos: 0, // Inicializa como nenhum ouro pego
+                    QuantMonstroKill: 0,
+                    movimento: moverAgente, // Lógica de movimento do agente (moverAgente, moverAgente2, etc.)
+                    mensagem: '' // Mensagem inicial vazia ou padrão
+                };
+                // Adicionar o agente ao array de agentes
+                agentes.push(novoAgente);
+
+                // Exibir o agente no container de scores
+                const agentElement = document.createElement('div');
+                agentElement.id = `pontosAgente${i}`;
+                agentElement.textContent = `Agente ${i + 1} = ${novoAgente.pontos}`;
+                agentScoresContainer.appendChild(agentElement);
+            }
+        }
+
+        function atirarFlecha() {
+            // Remover o event listener temporariamente para evitar múltiplos disparos de flecha
+            document.removeEventListener('keydown', handleKeyDown);
+            var size = parseInt(document.getElementById('size').value);
+            var tabuleiro = document.getElementById('tabuleiro');
+            var pontosAgenteSpan = document.getElementById('pontosAgente'); // Elemento span para exibir os pontos do agente
+            // Atualizar a exibição dos pontos do agente na tela
+            if (pontosAgenteSpan) {
+                pontosAgenteSpan.textContent = agentPoints;
+            }
+            // Atualizar o número de flechas na seção de detalhes
+            var detalhesElemento = document.getElementById('detalhes');
+            if (detalhesElemento) {
+                var pElement = detalhesElemento.querySelector('p:nth-child(6)');
+                if (pElement) {
+                    pElement.textContent = `Número de Flechas: ${numArrows}`;
+                }
+            }
+            var agentCell = tabuleiro.querySelector(`.row:nth-child(${agentRow + 1}) .cell:nth-child(${agentCol + 1})`);
+            var targetRow = agentRow;
+            var targetCol = agentCol;
+            // Verificar se o agente está no início do tabuleiro e sente mal cheiro
+            if (agentRow === 0 && agentCol === 0 && (agentCell.dataset.content === 'AVS' || agentCell.dataset.content === 'AVBS' || agentCell.dataset.content === 'AVSB')) {
+                // Atirar na célula (1,1) se sentir mal cheiro no início do tabuleiro
+                targetRow = 0;
+                targetCol = 0;
+            } else {
+                // Escolher uma direção aleatória para atirar a flecha
+                var randomDirection = Math.floor(Math.random() * 4); // 0 para cima, 1 para baixo, 2 para esquerda, 3 para direita
+                // Determinar a posição alvo com base na direção aleatória
+                switch (randomDirection) {
+                    case 0: // Cima
+                        targetRow--;
+                        break;
+                    case 1: // Baixo
+                        targetRow++;
+                        break;
+                    case 2: // Esquerda
+                        targetCol--;
+                        break;
+                    case 3: // Direita
+                        targetCol++;
+                        break;
+                }
+            }
+            // Verificar se a posição alvo está dentro dos limites do tabuleiro
+            if (targetRow >= 0 && targetRow < size && targetCol >= 0 && targetCol < size) {
+                // Encontrar a célula alvo
+                var targetCell = tabuleiro.querySelector(`.row:nth-child(${targetRow + 1}) .cell:nth-child(${targetCol + 1})`);
+                numArrows--;
+                agente.flechas++;
+                flechasGastas += 1
+                mostrarDetalhes();
+                if (targetCell) {
+                    // Verificar se o alvo contém o símbolo do monstro
+                    if (targetCell.dataset.content.includes(monsterSymbol)) {
+                        // Remover o monstro do tabuleiro
+                        targetCell.dataset.content = targetCell.dataset.content.replace(monsterSymbol, emptySymbol);
+                        targetCell.textContent = targetCell.textContent.replace(monsterSymbol, emptySymbol);
+                        // Atualizar o número de monstros
+                        numMonsters--;
+                        agente.matouMonstro += 1;
+                        agente.QuantMonstroKill++;
+                        // Exibir mensagem de sucesso
+                        alert('UAU!! BOA PONTARIA!!! Você atingiu o monstro!');
+                        agentPoints += 1000;
+                        mostrarDetalhes();
+                        return
+                    } else {
+                        // Exibir mensagem de que a flecha não atingiu o monstro ou a borda do tabuleiro
+                        alert('VISH! MELHORE A PONTARIA!! Você atirou uma flecha, mas não acertou o monstro!');
+                        return
+                    }
+                } else {
+                    // Exibir mensagem se a célula alvo estiver fora dos limites
+                    alert('Flecha atirada fora do tabuleiro!');
+                    return
+                }
+            } else {
+                numArrows--;
+                agente.flechas++;
+                // Exibir mensagem se a célula alvo estiver fora dos limites
+                alert('Flecha atirada fora do tabuleiro!');
+                return
+            }
+            // Atualizar a exibição dos pontos do agente na tela
+            if (pontosAgenteSpan) {
+                pontosAgenteSpan.textContent = agentPoints;
+            }
+            // Permitir novamente o disparo da flecha após um curto período de tempo
+            setTimeout(function() {
+                flechaAtirada = false;
+                document.addEventListener('keydown', handleKeyDown);
+            }, 1000);
+            mostrarDetalhes();
+        }
+
+        function moverAgente(agente) {
+            if (!jogoEmAndamento || agente.morto) {
+                return; // Não move o agente se o jogo não estiver em andamento ou se o agente estiver morto
+            }
+
+            var size = parseInt(document.getElementById('size').value);
+            var tabuleiro = document.getElementById('tabuleiro');
+            var currentCell = tabuleiro.querySelector(`.row:nth-child(${agente.linha + 1}) .cell:nth-child(${agente.coluna + 1})`);
+            currentCell.textContent = currentCell.textContent.replace(agentSymbol, '').replace(flecha, '');
+
+            // Escolher aleatoriamente uma direção (cima, baixo, esquerda, direita)
+            var randomDirection = Math.floor(Math.random() * 4);
+
+            // Atualizar a posição do agente de acordo com a direção escolhida
+            switch (randomDirection) {
+                case 0: // Cima
+                    if (agente.linha > 0) agente.linha--;
+                    break;
+                case 1: // Baixo
+                    if (agente.linha < size - 1) agente.linha++;
+                    break;
+                case 2: // Esquerda
+                    if (agente.coluna > 0) agente.coluna--;
+                    break;
+                case 3: // Direita
+                    if (agente.coluna < size - 1) agente.coluna++;
+                    break;
+            }
+
+            mostrarDetalhes(); // Atualiza detalhes específicos do agente
+            agente.pontos--; // Reduz pontos do agente
+            agente.passos++;
+
+            // Atualizar a exibição dos pontos do agente na tela
+            var pontosAgenteSpan = document.getElementById(`pontosAgente${agente.id}`);
+            if (pontosAgenteSpan) {
+                pontosAgenteSpan.textContent = agente.pontos;
+            }
+
+            // Verificar o conteúdo da nova célula após mover o agente
+            var newAgentCell = tabuleiro.querySelector(`.row:nth-child(${agente.linha + 1}) .cell:nth-child(${agente.coluna + 1})`);
+            switch (newAgentCell.dataset.content) {
+                case stenchSymbol:
+                case 'AFVS':
+                    agente.mensagem = '- Você sentiu um mau cheiro. Pressione "F" para atirar uma flecha.';
+                    var randomShoot = Math.random() < 0.5; // 50% de chance de atirar
+                    if (randomShoot) {
+                        atirarFlecha();
+                    }
+                    break;
+                case goldSymbol:
+                    agente.mensagem = '- Você encontrou o ouro, está na hora de ir.';
+                    // Remover o ouro da célula
+                    newAgentCell.dataset.content = newAgentCell.dataset.content.replace(goldSymbol, emptySymbol);
+                    newAgentCell.textContent = newAgentCell.textContent.replace(goldSymbol, emptySymbol);
+                    numGold--; // Decrementar o número de ouro
+                    agente.ourosPegos++;
+                    // Adicionar 1000 pontos ao agente
+                    agente.pontos += 1000;
+                    break;
+                case 'GS':
+                    mensagem = '- Você encontrou o ouro, mas sentiu um mal cheiro. Fique alerta, pode haver monstro ao redor!';
+                    var randomShoot = Math.random() < 0.5; // 50% de chance de atirar
+                    if (randomShoot) {
+                        atirarFlecha();
+                    }
+                    // Remover o ouro da célula
+                    newAgentCell.dataset.content = newAgentCell.dataset.content.replace(goldSymbol, emptySymbol);
+                    newAgentCell.textContent = newAgentCell.textContent.replace(goldSymbol, emptySymbol);
+                    numGold--; // Decrementar o número de ouro
+                    agente.ourosPegos++;
+                    // Adicionar 1000 pontos ao agente
+                    agentPoints += 1000;
+                    // Atualizar a exibição dos pontos do agente na tela
+                    pontosAgenteSpan.textContent = agentPoints;
+                    break;
+                case 'GBS':
+                case 'GBBS':
+                case 'GBBBS':
+                    mensagem = '- Você encontrou o ouro, mas sentiu uma brisa forte e sentiu um mal cheiro.. Fique alerta, pode haver poços muito próximos e o monstro a espreitar.';
+                    var randomShoot = Math.random() < 0.5; // 50% de chance de atirar
+                    if (randomShoot) {
+                        atirarFlecha();
+                        agente.flechas++;
+                    }
+                    // Remover o ouro da célula
+                    newAgentCell.dataset.content = newAgentCell.dataset.content.replace(goldSymbol, emptySymbol);
+                    newAgentCell.textContent = newAgentCell.textContent.replace(goldSymbol, emptySymbol);
+                    numGold--; // Decrementar o número de ouro
+                    agente.ourosPegos++;
+                    // Adicionar 1000 pontos ao agente
+                    agentPoints += 1000;
+                    // Atualizar a exibição dos pontos do agente na tela
+                    pontosAgenteSpan.textContent = agentPoints;
+                    break;
+                case 'GB':
+                case 'GBB':
+                case 'GBBB':
+                    mensagem = '- Você encontrou o ouro, mas sentiu uma brisa forte. Fique alerta, pode haver poços muito próximos!';
+                    // Remover o ouro da célula
+                    newAgentCell.dataset.content = newAgentCell.dataset.content.replace(goldSymbol, emptySymbol);
+                    newAgentCell.textContent = newAgentCell.textContent.replace(goldSymbol, emptySymbol);
+                    numGold--; // Decrementar o número de ouro
+                    agente.ourosPegos++;
+                    // Adicionar 1000 pontos ao agente
+                    agentPoints += 1000;
+                    // Atualizar a exibição dos pontos do agente na tela
+                    pontosAgenteSpan.textContent = agentPoints;
+                    break;
+                case pitSymbol:
+                    agente.mensagem = '';
+                    agente.caiuEmPoco++; // Incrementar o contador de quedas em poços
+                    agente.morto = true;
+                    alert('Você caiu em um poço, cuidado!');
+                    agente.morto = true; // Marca o agente como morto
+                    fimDeJogo();
+                    return;
+                case monsterSymbol:
+                    agente.mensagem = '';
+                    agente.MortoPorMonstro++;
+                    alert('Você não foi sagaz, o monstro lhe achou!');
+                    agente.morto = true; // Marca o agente como morto
+                    fimDeJogo();
+                    return;
+                case 'MB':
+                    agente.MortoPorMonstro++;
+                    alert('Você sentiu uma brisa, porém não prestou atenção e o monstro lhe achou!');
+                    agente.morto = true; // Marca o agente como morto
+                    fimDeJogo();
+                    return;
+                case 'BS':
+                case 'SB':
+                case 'BBS':
+                case 'BBBS':
+                case 'AFVBS':
+                case 'AFVBBS':
+                    mensagem = '- Você sentiu uma brisa forte e um mal cheiro. Fique alerta, pode haver monstro ou poços ao redor!';
+                    var randomShoot = Math.random() < 0.5; // 50% de chance de atirar
+                    if (randomShoot) {
+                        atirarFlecha();
+                        agente.flechas++;
+                    }
+                    break;
+                case 'B':
+                    agente.mensagem = '- Você sentiu uma brisa. Há poços por perto.';
+                    break;
+                case 'BB':
+                    agente.mensagem = '- Você sentiu uma brisa forte. Há poços muito próximos.';
+                    break;
+                default:
+                    agente.mensagem = '- Você entrou em uma casa vazia.';
+                    break;
+            }
+
+            // Adiciona a mensagem à lista de detalhes do agente
+            var passoAPasso = document.getElementById(`passoAPasso${agente.id}`);
+            if (passoAPasso) { // Verificação para garantir que o elemento existe
+                var listItem = document.createElement('li');
+                listItem.textContent = agente.mensagem;
+                passoAPasso.appendChild(listItem);
+            }
+
+            // Atualiza visualização do agente na célula do tabuleiro
+            var newCell = tabuleiro.querySelector(`.row:nth-child(${agente.linha + 1}) .cell:nth-child(${agente.coluna + 1})`);
+            newCell.textContent = agentSymbol + flecha + newCell.textContent;
+
+            // Verifica se o agente alcançou a vitória (exemplo: chegou na posição final com ouro)
+            if (agente.linha === size - 1 && agente.coluna === size - 1) {
+                alert(`Agente ${agente.id} conseguiu!`);
+                fimDeJogo();
+            }
+        }
+
+
+
+
+
+
+
+
+
+        // Função para movimentar todos os agentes
+        function movimentoAutomatico() {
+            for (let i = 0; i < agentes.length; i++) {
+                agentes[i].movimento(agentes[i]);
+            }
+        }
+        // Chamar a função de movimento automático a cada intervalo de tempo (exemplo: a cada 1000 ms)
+        setInterval(movimentoAutomatico, 200);
+
+        // Função para mudar o número de agentes com base no input
+        function changeNumberOfAgents() {
+            numAgentes = parseInt(document.getElementById('numeroAgentes').value) || 1;
+            // Limpar o tabuleiro para remover agentes existentes
+            var tabuleiro = document.getElementById('tabuleiro');
+            tabuleiro.innerHTML = ''; // Limpar o conteúdo existente
+
+            // Gerar novos agentes no tabuleiro
+            for (var i = 0; i < numAgentes; i++) {
+                // Gerar uma posição aleatória para cada agente
+                var randomRow = Math.floor(Math.random() * size);
+                var randomCol = Math.floor(Math.random() * size);
+
+                // Criar elemento de célula para o agente
+                var agentCell = document.createElement('div');
+                agentCell.className = 'cell';
+                agentCell.textContent = agentSymbol + flecha; // Incluir símbolo de agente
+                agentCell.dataset.content = agentSymbol; // Definir conteúdo do dataset
+                agentCell.style.gridRow = randomRow + 1; // Ajustar posição na grade (1-indexed)
+                agentCell.style.gridColumn = randomCol + 1;
+
+                // Adicionar a célula de agente ao tabuleiro
+                var rowElement = tabuleiro.querySelector(`.row:nth-child(${randomRow + 1})`);
+                if (!rowElement) {
+                    // Criar nova linha se não existir
+                    rowElement = document.createElement('div');
+                    rowElement.className = 'row';
+                    tabuleiro.appendChild(rowElement);
+                }
+                rowElement.appendChild(agentCell);
+            }
+        }
+
+        function baixarRelatorio() {
+            const {
+                jsPDF
+            } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Define o espaçamento entre tabelas
+            const espacoEntreTabelas = 20; // Ajuste este valor conforme necessário
+            const larguraPagina = doc.internal.pageSize.width;
+            // Adicionar título do relatório
+            doc.setFontSize(18);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Relatório do Battle Royale', 10, 20);
+
+            // Atualiza a posição Y após o título do relatório
+            let posicaoAtualY = 30;
+
+
+
+
+
+
+            // Iterar sobre todos os agentes
+            agentes.forEach((agente, index) => {
+                let agentTitle = `Agente ${index + 1}`;
+
+                const resposta1 = agente.matouMonstro ? 'Sim' : 'Não';
+                const resposta2 = agente.caiuEmPoco ? 'Sim' : 'Não';
+                const resposta3 = agente.MortoPorMonstro ? 'Sim' : 'Não';
+
+                const columns = [
+                    "Pontos do Agente",
+                    "Quantidades de Passos",
+                    "Número de Flechas Gastas",
+                    "Matou o Monstro",
+                    "Caiu em Poço",
+                    "Número de Ouros Pegos",
+                    "Tamanho do Tabuleiro",
+                    "Morto Por Monstro",
+                    "Quantidade Monstro Abatido"
+                ];
+
+                const data = [
+                    [agente.pontos, agente.passos, agente.flechas, resposta1, resposta2, agente.ourosPegos, tamanhoTabuleiro, resposta3, agente.QuantMonstroKill]
+                ];
+                // Calcular a largura de cada coluna
+                const numColumns = columns.length;
+                const larguraColuna = larguraPagina / numColumns;
+
+                // Adicionar título do agente
+                doc.setFontSize(16);
+                doc.text(agentTitle, 10, posicaoAtualY);
+                doc.autoTable({
+                    startY: posicaoAtualY + 10, // Ajusta o início da tabela
+                    head: [columns],
+                    body: data,
+                    styles: {
+                        fontSize: 12,
+                        textColor: [0, 0, 0],
+                        fontStyle: 'normal',
+                        cellPadding: 5,
+                        halign: 'center' // Centraliza a tabela na página
+                    },
+                    headStyles: {
+                        fillColor: [200, 200, 200],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: columns.reduce((styles, _, i) => {
+                        styles[i] = {
+                            cellWidth: larguraColuna
+                        }; // Define a largura de cada coluna
+                        return styles;
+                    }, {}),
+                    margin: {
+                        left: 0,
+                        right: 0
+                    },
+                    pageBreak: 'avoid' // Evita quebra de página dentro da tabela
+                });
+
+
+                // Atualizar a posição Y após a tabela
+                posicaoAtualY = doc.lastAutoTable.finalY + espacoEntreTabelas;
+            });
+
+            doc.save('relatorio_agente.pdf');
+        }
+    </script>
+
+</body>
+
+</html>
