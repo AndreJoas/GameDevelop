@@ -405,7 +405,7 @@ h2 {
 }
 
 [data-content="A"] {
-    background-color: black;
+    background-color: rgb(44, 160, 28);
     color: rgb(0, 0, 0);
 }
 
@@ -434,7 +434,7 @@ h2 {
 }
 
 [data-content="AV"] {
-    background: linear-gradient(to bottom, black 50%, black 50%);
+    background: linear-gradient( rgb(132, 215, 7) 50%, rgb(132, 215, 7) 50%);
     color: white;
 }
 
