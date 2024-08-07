@@ -1603,7 +1603,7 @@ function movimentoAutomatico() {
     }
 }
 // Chamar a função de movimento automático a cada 1 segundo (1000 milissegundos)
-setInterval(movimentoAutomatico, 5);
+setInterval(movimentoAutomatico, 1500);
 // -----------------------------
 // Função moverAgente3 (não precisa mexer em nada acima dessa linha)
 function moverAgente32() {
