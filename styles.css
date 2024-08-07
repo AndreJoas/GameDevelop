@@ -11,6 +11,43 @@ html {
     height: 100%;
 }
 
+.botoe {
+    max-width: 100%;
+    width: 35%;
+    /* border: solid red 1px; */
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 2px;
+    padding: 2px;
+}
+
+.b1 {
+    padding: 2px;
+    width: 20%;
+    height: 50px;
+    cursor: pointer;
+}
+
+.cima,
+.baixo,
+.direita,
+.esquerda {
+    background-color: #8B4513;
+    color: rgb(255, 255, 255);
+    font-weight: 900;
+    text-align: center;
+    transition: 0.5s linear;
+}
+
+.cima:hover,
+.baixo:hover,
+.direita:hover,
+.esquerda:hover {
+    background-color: #fefefe;
+    color: black;
+}
+
 .voltaraomenu {
     display: flex;
     justify-content: space-between;
