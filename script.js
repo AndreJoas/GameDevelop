@@ -1603,7 +1603,7 @@ function movimentoAutomatico() {
     }
 }
 // Chamar a função de movimento automático a cada 1 segundo (1000 milissegundos)
-setInterval(movimentoAutomatico, 1500);
+setInterval(movimentoAutomatico, 1400);
 // -----------------------------
 // Função moverAgente3 (não precisa mexer em nada acima dessa linha)
 function moverAgente32() {
@@ -1745,7 +1745,7 @@ function moverAgente3(caminho) {
                 alert('Parabéns! Você chegou ao destino final.');
                 fimDeJogo();
             }
-        }, (index + 1) * 100);
+        }, (index + 1) * 1000);
         movimentosRealizados++;
     });
 }
@@ -1763,7 +1763,7 @@ function seguirRotaDeVolta2(caminhoDeVolta) {
                 alert('Parabéns! Você chegou ao ponto inicial com o ouro.');
                 fimDeJogo();
             }
-        }, (index + 1) * 100);
+        }, (index + 1) * 1000);
     });
 }
 // LOGICA DO AGENTE3 TERMINA AQUI (MAS ESTA TENDO ALGUNS BUGS!!!
